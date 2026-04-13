@@ -1,105 +1,165 @@
 "use client";
 
-import {useState} from "react";
-import {useProducts} from "@/context/ProductContext";
-import {useAuth} from "@/context/AuthContext";
-import {useRouter} from "next/navigation";
-import {useEffect} from "react";
+import { useState } from "react";
+import { useProducts } from "@/context/ProductContext";
 
 export default function AdminPage() {
-    const {products, addProduct, deleteProduct} = useProducts();
+  const { products, addProduct, deleteProduct } = useProducts();
 
-    const [title, setTitle] = useState("");
-    const [price, setPrice] = useState("");
-    const [image, setImage] = useState("");
-    const {user} = useAuth();
-    const router = useRouter();
-    const [category, setCategory] = useState("Electronics");
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [image, setImage] = useState("");
+  const [category, setCategory] = useState("Electronics");
 
-    useEffect(() => {
-        if (!user) {
-            router.push("/login");
-        }
-    }, [user]);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-    const handleAdd = () => {
-        if (!title || !price) return;
+  const handleAddOrUpdate = () => {
+    if (!title || !price) return;
 
-        addProduct({
-            id: `product-${Date.now()}`,
-            title,
-            price: Number(price),
-            image: image || "https://picsum.photos/300",
-            category: category,
-        });
+    if (editingId) {
+      // 🔥 UPDATE PRODUCT
+      deleteProduct(editingId);
 
-        setTitle("");
-        setPrice("");
-        setImage("");
-    };
+      addProduct({
+        id: editingId,
+        title,
+        price: Number(price),
+        image: image || "https://picsum.photos/300",
+        category,
+      });
 
-    const {logout} = useAuth();
+      setEditingId(null);
+    } else {
+      // ➕ ADD PRODUCT
+      addProduct({
+        id: `product-${Date.now()}`,
+        title,
+        price: Number(price),
+        image: image || "https://picsum.photos/300",
+        category,
+      });
+    }
 
-    return (
-        <div className="p-6 max-w-[1000px] mx-auto">
-            <h1 className="text-xl font-bold mb-4">Admin Dashboard</h1>
+    // reset form
+    setTitle("");
+    setPrice("");
+    setImage("");
+    setCategory("Electronics");
+  };
 
-            {/* ADD PRODUCT */}
-            <div className="bg-white p-4 mb-6 grid gap-2">
-                <input
-                    placeholder="Product Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="border p-2"
-                />
+  const handleEdit = (p: any) => {
+    setEditingId(p.id);
+    setTitle(p.title);
+    setPrice(String(p.price));
+    setImage(p.image);
+    setCategory(p.category);
+  };
 
-                <input
-                    placeholder="Price"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="border p-2"
-                />
+  return (
+    <div className="p-6 max-w-[1200px] mx-auto">
 
-                <input
-                    placeholder="Image URL"
-                    value={image}
-                    onChange={(e) => setImage(e.target.value)}
-                    className="border p-2"
-                />
+      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
 
-                <select onChange={(e) => setCategory(e.target.value)} className="border p-2">
-                    <option>Electronics</option>
-                    <option>Fashion</option>
-                    <option>Gaming</option>
-                    <option>Home</option>
-                </select>
+      {/* 📊 STATS */}
+      <div className="bg-white p-4 mb-6 shadow">
+        <p className="text-lg font-semibold">
+          Total Products: {products.length}
+        </p>
+      </div>
 
-                <button onClick={handleAdd} className="bg-green-500 text-white py-2">
-                    Add Product
-                </button>
-            </div>
+      {/* ➕ ADD / EDIT FORM */}
+      <div className="bg-white p-4 mb-6 grid gap-2 shadow">
 
-            {/* PRODUCT LIST */}
-            <div className="bg-white p-4">
-                {products.map((p) => (
-                    <div key={p.id} className="flex justify-between border-b py-2">
-                        <span>{p.title}</span>
+        <input
+          placeholder="Product Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="border p-2"
+        />
 
-                        <button onClick={() => deleteProduct(p.id)} className="text-red-500">
-                            Delete
-                        </button>
-                    </div>
-                ))}
-            </div>
-            <button
-                onClick={() => {
-                    logout();
-                    router.push("/login");
-                }}
-                className="bg-red-500 text-white px-4 py-2 mb-4"
+        <input
+          placeholder="Price"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          className="border p-2"
+        />
+
+        <input
+          placeholder="Image URL"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
+          className="border p-2"
+        />
+
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="border p-2"
+        >
+          <option>Electronics</option>
+          <option>Fashion</option>
+          <option>Gaming</option>
+          <option>Home</option>
+        </select>
+
+        <button
+          onClick={handleAddOrUpdate}
+          className={`text-white py-2 ${
+            editingId ? "bg-blue-500" : "bg-green-500"
+          }`}
+        >
+          {editingId ? "Update Product" : "Add Product"}
+        </button>
+      </div>
+
+      {/* 📦 PRODUCT LIST */}
+      <div className="bg-white p-4 shadow">
+        <h2 className="font-bold mb-4">Products</h2>
+
+        <div className="space-y-4">
+          {products.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center justify-between border-b pb-3"
             >
-                Logout
-            </button>
+              {/* LEFT */}
+              <div className="flex items-center gap-4">
+                <img
+                  src={p.image}
+                  className="h-16 w-16 object-contain"
+                />
+
+                <div>
+                  <p className="font-semibold">{p.title}</p>
+                  <p className="text-sm text-gray-500">
+                    R{p.price} • {p.category}
+                  </p>
+                </div>
+              </div>
+
+              {/* RIGHT */}
+              <div className="flex gap-2">
+
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="bg-blue-500 text-white px-3 py-1 text-sm"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deleteProduct(p.id)}
+                  className="bg-red-500 text-white px-3 py-1 text-sm"
+                >
+                  Delete
+                </button>
+
+              </div>
+            </div>
+          ))}
         </div>
-    );
+      </div>
+
+    </div>
+  );
 }

@@ -7,6 +7,7 @@ type OrderItem = {
   title: string;
   price: number;
   quantity: number;
+  image: string; // ✅ added
 };
 
 type Order = {
@@ -14,6 +15,7 @@ type Order = {
   items: OrderItem[];
   total: number;
   createdAt: string;
+  status: "Processing" | "Shipped" | "Delivered"; // ✅ added
 };
 
 type OrderContextType = {
@@ -26,17 +28,24 @@ const OrderContext = createContext<OrderContextType | null>(null);
 export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // load orders
+  // ✅ Load orders safely
   useEffect(() => {
-    const stored = localStorage.getItem("orders");
-    if (stored) setOrders(JSON.parse(stored));
+    try {
+      const stored = localStorage.getItem("orders");
+      if (stored) {
+        setOrders(JSON.parse(stored));
+      }
+    } catch (err) {
+      console.error("Failed to load orders", err);
+    }
   }, []);
 
-  // save orders
+  // ✅ Save orders
   useEffect(() => {
     localStorage.setItem("orders", JSON.stringify(orders));
   }, [orders]);
 
+  // ✅ Create order
   const createOrder = (items: OrderItem[]) => {
     const total = items.reduce(
       (sum, item) => sum + item.price * item.quantity,
@@ -48,10 +57,30 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
       items,
       total,
       createdAt: new Date().toISOString(),
+      status: "Processing", // ✅ default status
     };
 
     setOrders((prev) => [newOrder, ...prev]);
   };
+
+  // ✅ Simulate delivery updates (optional but 🔥)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOrders((prev) =>
+        prev.map((order) => {
+          if (order.status === "Processing") {
+            return { ...order, status: "Shipped" };
+          }
+          if (order.status === "Shipped") {
+            return { ...order, status: "Delivered" };
+          }
+          return order;
+        })
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <OrderContext.Provider value={{ orders, createOrder }}>
