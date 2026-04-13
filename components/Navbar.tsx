@@ -5,6 +5,7 @@ import { ShoppingCart, Search, Menu, Heart } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useAddress } from "@/context/AddressContext"; // ✅ NEW
 import { useState } from "react";
 
 type Props = {
@@ -16,6 +17,7 @@ export default function Navbar({ search, setSearch }: Props) {
   const { cart } = useCart();
   const { user, logout } = useAuth();
   const { wishlist } = useWishlist();
+  const { selectedAddress } = useAddress(); // ✅ NEW
 
   const [open, setOpen] = useState(false);
 
@@ -27,23 +29,29 @@ export default function Navbar({ search, setSearch }: Props) {
         {/* Logo */}
         <Link href="/">
           <div className="text-2xl font-bold cursor-pointer hover:border border-white px-2">
-            amazon
+            fundzani
           </div>
         </Link>
 
-        {/* Location */}
-        <div className="text-xs cursor-pointer hover:border border-white px-2">
-          <p>Hello</p>
-          <p className="font-bold">Select your address</p>
-        </div>
+        {/* 📍 LOCATION (UPDATED) */}
+        <Link href="/address">
+          <div className="text-xs cursor-pointer hover:border border-white px-2">
+            {/* <p>Hello</p> */}
+            <p className="font-bold">
+              {selectedAddress
+                ? `${selectedAddress.city}, ${selectedAddress.street}`
+                : "Select your address"}
+            </p>
+          </div>
+        </Link>
 
         {/* Search */}
         <div className="flex flex-1">
           <input
             value={search || ""}
             onChange={(e) => setSearch?.(e.target.value)}
-            className="w-full p-2 text-black outline-none"
-            placeholder="Search Amazon"
+            className="w-full p-2 text-white outline-none"
+            placeholder="Search fundzani"
           />
           <button className="bg-[#febd69] px-4 flex items-center justify-center">
             <Search size={20} />
@@ -53,7 +61,7 @@ export default function Navbar({ search, setSearch }: Props) {
         {/* Right */}
         <div className="flex items-center gap-6 text-xs">
 
-          {/* 🔥 ACCOUNT DROPDOWN */}
+          {/* ACCOUNT */}
           <div
             className="relative"
             onMouseEnter={() => setOpen(true)}
@@ -75,7 +83,7 @@ export default function Navbar({ search, setSearch }: Props) {
 
             {/* DROPDOWN */}
             {open && user && (
-              <div className="absolute right-0 mt-2 w-56 bg-white text-black shadow-lg border z-50 animate-fade-in">
+              <div className="absolute right-0 mt-2 w-56 bg-white text-black shadow-lg border z-50">
 
                 <div className="p-3 border-b font-bold">
                   Your Account
@@ -96,6 +104,12 @@ export default function Navbar({ search, setSearch }: Props) {
                 <Link href="/admin">
                   <div className="p-2 hover:bg-gray-100 cursor-pointer">
                     Admin Dashboard
+                  </div>
+                </Link>
+
+                <Link href="/address">
+                  <div className="p-2 hover:bg-gray-100 cursor-pointer">
+                    Your Addresses
                   </div>
                 </Link>
 

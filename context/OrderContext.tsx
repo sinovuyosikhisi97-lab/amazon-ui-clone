@@ -6,21 +6,22 @@ type OrderItem = {
   id: string;
   title: string;
   price: number;
+  image: string;
   quantity: number;
-  image: string; // ✅ added
 };
 
 type Order = {
   id: string;
   items: OrderItem[];
-  total: number;
+  totalAmount: number;
+  status: string;
   createdAt: string;
-  status: "Processing" | "Shipped" | "Delivered"; // ✅ added
 };
 
 type OrderContextType = {
   orders: Order[];
   createOrder: (items: OrderItem[]) => void;
+  updateOrderStatus: (id: string, status: string) => void;
 };
 
 const OrderContext = createContext<OrderContextType | null>(null);
@@ -28,62 +29,64 @@ const OrderContext = createContext<OrderContextType | null>(null);
 export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // ✅ Load orders safely
+  // ✅ Load + FIX old data (missing totalAmount)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("orders");
-      if (stored) {
-        setOrders(JSON.parse(stored));
-      }
-    } catch (err) {
-      console.error("Failed to load orders", err);
+    const stored = localStorage.getItem("orders");
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+
+      const fixedOrders = parsed.map((order: any) => ({
+        ...order,
+        totalAmount:
+          order.totalAmount ??
+          order.items.reduce(
+            (sum: number, item: OrderItem) =>
+              sum + item.price * item.quantity,
+            0
+          ),
+      }));
+
+      setOrders(fixedOrders);
     }
   }, []);
 
-  // ✅ Save orders
+  // ✅ Save
   useEffect(() => {
     localStorage.setItem("orders", JSON.stringify(orders));
   }, [orders]);
 
-  // ✅ Create order
+  // ✅ Create Order
   const createOrder = (items: OrderItem[]) => {
-    const total = items.reduce(
+    const totalAmount = items.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
     );
 
     const newOrder: Order = {
-      id: `order-${Date.now()}`,
+      id: `ORD-${Date.now()}`,
       items,
-      total,
-      createdAt: new Date().toISOString(),
-      status: "Processing", // ✅ default status
+      totalAmount,
+      status: "pending",
+      createdAt: new Date().toISOString().split("T")[0],
     };
 
     setOrders((prev) => [newOrder, ...prev]);
   };
 
-  // ✅ Simulate delivery updates (optional but 🔥)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOrders((prev) =>
-        prev.map((order) => {
-          if (order.status === "Processing") {
-            return { ...order, status: "Shipped" };
-          }
-          if (order.status === "Shipped") {
-            return { ...order, status: "Delivered" };
-          }
-          return order;
-        })
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  // ✅ Update Status
+  const updateOrderStatus = (id: string, status: string) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === id ? { ...order, status } : order
+      )
+    );
+  };
 
   return (
-    <OrderContext.Provider value={{ orders, createOrder }}>
+    <OrderContext.Provider
+      value={{ orders, createOrder, updateOrderStatus }}
+    >
       {children}
     </OrderContext.Provider>
   );

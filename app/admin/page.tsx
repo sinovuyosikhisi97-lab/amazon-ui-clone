@@ -9,6 +9,7 @@ export default function AdminPage() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [image, setImage] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Electronics");
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -16,34 +17,29 @@ export default function AdminPage() {
   const handleAddOrUpdate = () => {
     if (!title || !price) return;
 
+    const productData = {
+      id: editingId || `product-${Date.now()}`,
+      title,
+      price: Number(price),
+      image: image || "https://picsum.photos/300",
+      category,
+      description,
+    };
+
     if (editingId) {
-      // 🔥 UPDATE PRODUCT
+      // 🔥 keep your logic (delete + add)
       deleteProduct(editingId);
-
-      addProduct({
-        id: editingId,
-        title,
-        price: Number(price),
-        image: image || "https://picsum.photos/300",
-        category,
-      });
-
+      addProduct(productData);
       setEditingId(null);
     } else {
-      // ➕ ADD PRODUCT
-      addProduct({
-        id: `product-${Date.now()}`,
-        title,
-        price: Number(price),
-        image: image || "https://picsum.photos/300",
-        category,
-      });
+      addProduct(productData);
     }
 
     // reset form
     setTitle("");
     setPrice("");
     setImage("");
+    setDescription(""); // ✅ FIXED
     setCategory("Electronics");
   };
 
@@ -53,6 +49,7 @@ export default function AdminPage() {
     setPrice(String(p.price));
     setImage(p.image);
     setCategory(p.category);
+    setDescription(p.description || ""); // ✅ FIXED
   };
 
   return (
@@ -89,6 +86,14 @@ export default function AdminPage() {
           value={image}
           onChange={(e) => setImage(e.target.value)}
           className="border p-2"
+        />
+
+        {/* ✅ NEW: DESCRIPTION */}
+        <textarea
+          placeholder="Product Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="border p-2 min-h-[80px]"
         />
 
         <select
@@ -133,6 +138,11 @@ export default function AdminPage() {
                   <p className="font-semibold">{p.title}</p>
                   <p className="text-sm text-gray-500">
                     R{p.price} • {p.category}
+                  </p>
+
+                  {/* ✅ SHOW DESCRIPTION */}
+                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                    {p.description}
                   </p>
                 </div>
               </div>

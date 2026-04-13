@@ -6,7 +6,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { OrderProvider } from "@/context/OrderContext";
 import { ProductProvider } from "@/context/ProductContext";
-import { WishlistProvider } from "@/context/WishlistContext"; // ✅ ADD THIS
+import { WishlistProvider } from "@/context/WishlistContext";
+import { AddressProvider } from "@/context/AddressContext"; // ✅ NEW
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,8 +39,13 @@ export default function RootLayout({
           <ProductProvider>
             <CartProvider>
               <OrderProvider>
-                <WishlistProvider> {/* ✅ NOW INCLUDED */}
-                  {children}
+                <WishlistProvider>
+                  
+                  {/* ✅ ADDRESS SYSTEM WRAPPED HERE */}
+                  <AddressProvider>
+                    {children}
+                  </AddressProvider>
+
                 </WishlistProvider>
               </OrderProvider>
             </CartProvider>
