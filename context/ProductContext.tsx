@@ -6,9 +6,11 @@ type Product = {
   id: string;
   title: string;
   price: number;
+  originalPrice?: number;
   image: string;
   category: string;
-  description: string
+  description?: string;
+  isDeal?: boolean;
 };
 
 type ProductContextType = {

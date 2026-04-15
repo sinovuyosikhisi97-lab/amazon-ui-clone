@@ -1,175 +1,186 @@
 "use client";
 
-import { useState } from "react";
-import { useProducts } from "@/context/ProductContext";
+import {useState} from "react";
+import {useProducts} from "@/context/ProductContext";
 
 export default function AdminPage() {
-  const { products, addProduct, deleteProduct } = useProducts();
+    const {products, addProduct, deleteProduct} = useProducts();
 
-  const [title, setTitle] = useState("");
-  const [price, setPrice] = useState("");
-  const [image, setImage] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Electronics");
+    const [title, setTitle] = useState("");
+    const [price, setPrice] = useState("");
+    const [originalPrice, setOriginalPrice] = useState(""); // ✅ NEW
+    const [isDeal, setIsDeal] = useState(false); // ✅ NEW
+    const [image, setImage] = useState("");
+    const [description, setDescription] = useState("");
+    const [category, setCategory] = useState("Electronics");
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleAddOrUpdate = () => {
-    if (!title || !price) return;
+    const handleAddOrUpdate = () => {
+        if (!title || !price) return;
 
-    const productData = {
-      id: editingId || `product-${Date.now()}`,
-      title,
-      price: Number(price),
-      image: image || "https://picsum.photos/300",
-      category,
-      description,
+        const productData = {
+            id: editingId || `product-${Date.now()}`,
+            title,
+            price: Number(price),
+            originalPrice: originalPrice ? Number(originalPrice) : undefined, // ✅
+            isDeal, // ✅
+            image: image || "https://picsum.photos/300",
+            category,
+            description,
+        };
+
+        if (editingId) {
+            deleteProduct(editingId);
+            addProduct(productData);
+            setEditingId(null);
+        } else {
+            addProduct(productData);
+        }
+
+        // reset form
+        setTitle("");
+        setPrice("");
+        setOriginalPrice(""); // ✅
+        setIsDeal(false); // ✅
+        setImage("");
+        setDescription("");
+        setCategory("Electronics");
     };
 
-    if (editingId) {
-      // 🔥 keep your logic (delete + add)
-      deleteProduct(editingId);
-      addProduct(productData);
-      setEditingId(null);
-    } else {
-      addProduct(productData);
-    }
+    const handleEdit = (p: any) => {
+        setEditingId(p.id);
+        setTitle(p.title);
+        setPrice(String(p.price));
+        setOriginalPrice(p.originalPrice ? String(p.originalPrice) : ""); // ✅
+        setIsDeal(p.isDeal || false); // ✅
+        setImage(p.image);
+        setCategory(p.category);
+        setDescription(p.description || "");
+    };
 
-    // reset form
-    setTitle("");
-    setPrice("");
-    setImage("");
-    setDescription(""); // ✅ FIXED
-    setCategory("Electronics");
-  };
+    return (
+        <div className="p-6 max-w-[1200px] mx-auto">
+            <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
 
-  const handleEdit = (p: any) => {
-    setEditingId(p.id);
-    setTitle(p.title);
-    setPrice(String(p.price));
-    setImage(p.image);
-    setCategory(p.category);
-    setDescription(p.description || ""); // ✅ FIXED
-  };
+            {/* STATS */}
+            <div className="bg-white p-4 mb-6 shadow">
+                <p className="text-lg font-semibold">Total Products: {products.length}</p>
+            </div>
 
-  return (
-    <div className="p-6 max-w-[1200px] mx-auto">
-
-      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-
-      {/* 📊 STATS */}
-      <div className="bg-white p-4 mb-6 shadow">
-        <p className="text-lg font-semibold">
-          Total Products: {products.length}
-        </p>
-      </div>
-
-      {/* ➕ ADD / EDIT FORM */}
-      <div className="bg-white p-4 mb-6 grid gap-2 shadow">
-
-        <input
-          placeholder="Product Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border p-2"
-        />
-
-        <input
-          placeholder="Price"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="border p-2"
-        />
-
-        <input
-          placeholder="Image URL"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          className="border p-2"
-        />
-
-        {/* ✅ NEW: DESCRIPTION */}
-        <textarea
-          placeholder="Product Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="border p-2 min-h-[80px]"
-        />
-
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="border p-2"
-        >
-          <option>Electronics</option>
-          <option>Fashion</option>
-          <option>Gaming</option>
-          <option>Home</option>
-        </select>
-
-        <button
-          onClick={handleAddOrUpdate}
-          className={`text-white py-2 ${
-            editingId ? "bg-blue-500" : "bg-green-500"
-          }`}
-        >
-          {editingId ? "Update Product" : "Add Product"}
-        </button>
-      </div>
-
-      {/* 📦 PRODUCT LIST */}
-      <div className="bg-white p-4 shadow">
-        <h2 className="font-bold mb-4">Products</h2>
-
-        <div className="space-y-4">
-          {products.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between border-b pb-3"
-            >
-              {/* LEFT */}
-              <div className="flex items-center gap-4">
-                <img
-                  src={p.image}
-                  className="h-16 w-16 object-contain"
+            {/* FORM */}
+            <div className="bg-white p-4 mb-6 grid gap-2 shadow">
+                <input
+                    placeholder="Product Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="border p-2"
                 />
 
-                <div>
-                  <p className="font-semibold">{p.title}</p>
-                  <p className="text-sm text-gray-500">
-                    R{p.price} • {p.category}
-                  </p>
+                <input
+                    placeholder="Price (Deal Price)"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="border p-2"
+                />
 
-                  {/* ✅ SHOW DESCRIPTION */}
-                  <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                    {p.description}
-                  </p>
-                </div>
-              </div>
+                {/* ✅ ORIGINAL PRICE */}
+                <input
+                    placeholder="Original Price (optional)"
+                    value={originalPrice}
+                    onChange={(e) => setOriginalPrice(e.target.value)}
+                    className="border p-2"
+                />
 
-              {/* RIGHT */}
-              <div className="flex gap-2">
+                {/* ✅ DEAL TOGGLE */}
+                <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={isDeal} onChange={(e) => setIsDeal(e.target.checked)} />
+                    Mark as Today's Deal
+                </label>
+
+                <input
+                    placeholder="Image URL"
+                    value={image}
+                    onChange={(e) => setImage(e.target.value)}
+                    className="border p-2"
+                />
+
+                <textarea
+                    placeholder="Product Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="border p-2 min-h-[80px]"
+                />
+
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className="border p-2">
+                    <option>Electronics</option>
+                    <option>Fashion</option>
+                    <option>Gaming</option>
+                    <option>Home</option>
+                </select>
 
                 <button
-                  onClick={() => handleEdit(p)}
-                  className="bg-blue-500 text-white px-3 py-1 text-sm"
+                    onClick={handleAddOrUpdate}
+                    className={`text-white py-2 ${editingId ? "bg-blue-500" : "bg-green-500"}`}
                 >
-                  Edit
+                    {editingId ? "Update Product" : "Add Product"}
                 </button>
-
-                <button
-                  onClick={() => deleteProduct(p.id)}
-                  className="bg-red-500 text-white px-3 py-1 text-sm"
-                >
-                  Delete
-                </button>
-
-              </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-    </div>
-  );
+            {/* PRODUCT LIST */}
+            <div className="bg-white p-4 shadow">
+                <h2 className="font-bold mb-4">Products</h2>
+
+                <div className="space-y-4">
+                    {products.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between border-b pb-3">
+                            {/* LEFT */}
+                            <div className="flex items-center gap-4">
+                                <img src={p.image} className="h-16 w-16 object-contain" />
+
+                                <div>
+                                    <p className="font-semibold flex items-center gap-2">
+                                        {p.title}
+
+                                        {/* 🔥 DEAL BADGE */}
+                                        {p.isDeal && (
+                                            <span className="bg-red-500 text-white text-xs px-2 py-0.5">Deal</span>
+                                        )}
+                                    </p>
+
+                                    <p className="text-sm text-gray-500">
+                                        R{p.price} • {p.category}
+                                    </p>
+
+                                    {/* ORIGINAL PRICE */}
+                                    {p.originalPrice && (
+                                        <p className="text-xs text-gray-400 line-through">R{p.originalPrice}</p>
+                                    )}
+
+                                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{p.description}</p>
+                                </div>
+                            </div>
+
+                            {/* RIGHT */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleEdit(p)}
+                                    className="bg-blue-500 text-white px-3 py-1 text-sm"
+                                >
+                                    Edit
+                                </button>
+
+                                <button
+                                    onClick={() => deleteProduct(p.id)}
+                                    className="bg-red-500 text-white px-3 py-1 text-sm"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
 }
